@@ -1,15 +1,29 @@
-use std::io::{self, Write};
-
 use url::Url;
 
 use hyper::{Body, Client, Request};
-use hyper::rt::{Future, Stream};
+use hyper::rt::Stream;
 use hyper::client::HttpConnector;
 
 // Bring in the .compat() extension so we can await! hyper's futures
 use futures::compat::Future01CompatExt;
 
 use crate::error::Error;
+
+#[derive(Deserialize)]
+struct NegotiateResponse {
+    #[serde(rename = "connectionId")]
+    pub connection_id: String,
+    #[serde(rename = "availableTransports")]
+    pub available_transports: Vec<AvailableTransport>
+}
+
+#[derive(Deserialize)]
+struct AvailableTransport {
+    #[serde(rename = "transport")]
+    pub name: String,
+    #[serde(rename = "transferFormats")]
+    pub transfer_formats: Vec<String>
+}
 
 /** Represents a connection to a SignalR Hub */
 pub struct HubConnection {
@@ -36,12 +50,22 @@ impl HubConnection {
 
         // Negotiate
         let req = Request::post(negotiate_url.as_str())
+            // Empty body doesn't put any Content-Length in by default :(
             .header("Content-Length", 0)
             .body(Body::empty())
             .unwrap();
         let response = await!(self.client.request(req).compat())?;
         let content = await!(response.into_body().concat2().compat())?;
-        io::stdout().write_all(&content)?;
+
+        // Parse the response
+        let resp: NegotiateResponse = serde_json::from_slice(&content)?;
+
+        println!("connectionId: {}", resp.connection_id);
+        println!("available transports:");
+        for transport in resp.available_transports {
+            println!("  * {} (transfer formats: {})", transport.name, transport.transfer_formats.join(", "));
+        }
+
         Ok(())
     }
 }

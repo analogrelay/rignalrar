@@ -2,10 +2,7 @@
 
 use std::{env, process};
 
-use tokio::prelude::*;
-
 use futures::future::{FutureExt, TryFutureExt};
-use futures::compat::TokioDefaultSpawner;
 
 use url::Url;
 use rignalrar::HubConnection;
