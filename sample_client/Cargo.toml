@@ -6,6 +6,6 @@ edition = "2018"
 
 [dependencies]
 rignalrar = { path = ".." }
-tokio = "0.1.11"
 url = "1.7.1"
-futures-preview = { version = "0.3.0-alpha.9", features = ["tokio-compat"] }
+futures = "0.3.1"
+tokio = { version = "0.2.9", features = ["full"] }
