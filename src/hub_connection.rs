@@ -1,11 +1,8 @@
 use url::Url;
 
+use bytes::buf::BufExt;
 use hyper::{Body, Client, Request};
-use hyper::rt::Stream;
 use hyper::client::HttpConnector;
-
-// Bring in the .compat() extension so we can await! hyper's futures
-use futures::compat::Future01CompatExt;
 
 use crate::error::Error;
 
@@ -54,11 +51,11 @@ impl HubConnection {
             .header("Content-Length", 0)
             .body(Body::empty())
             .unwrap();
-        let response = await!(self.client.request(req).compat())?;
-        let content = await!(response.into_body().concat2().compat())?;
+        let response = self.client.request(req).await?;
+        let content = hyper::body::aggregate(response).await?;
 
         // Parse the response
-        let resp: NegotiateResponse = serde_json::from_slice(&content)?;
+        let resp: NegotiateResponse = serde_json::from_reader(content.reader())?;
 
         println!("connectionId: {}", resp.connection_id);
         println!("available transports:");

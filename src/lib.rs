@@ -1,7 +1,6 @@
-#![feature(async_await, await_macro, futures_api)]
-
 extern crate url;
 extern crate hyper;
+extern crate futures_util;
 
 #[macro_use]
 extern crate serde_derive;
